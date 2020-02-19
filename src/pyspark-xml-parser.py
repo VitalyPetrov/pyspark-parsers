@@ -1,5 +1,6 @@
 import argparse
 
+from typing import List
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.types import StructField, StringType, StructType
@@ -7,9 +8,9 @@ from pyspark.sql.functions import col
 
 
 def fetch_data(
-    filename,
-    encoding,
-    rowTag,
+    filename: str,
+    encoding: str,
+    rowTag: str,
     schema=None
 ):
     """
@@ -17,6 +18,8 @@ def fetch_data(
     To use, please specify data files destinaton (filename) and delimiter chars (separator and escapechar)
 
     :param filename: path to data files to parse (can be both separate file or collection by * pattern)
+    :param encoding: datafile encoding (UTF-8, ASCII, etc)
+    :param rowTag:  string to split the records
     :param schema: (optional) dataframe schema to use
 
     :return PySpark DataFrame object storing the data from given files
@@ -38,8 +41,8 @@ def fetch_data(
 
 
 def obtain_schema(
-    attributes,
-    dtypes
+    attributes: List[str],
+    dtypes: List[type]
 ):
     """
     Returns schema object to be attached to PySpark DataFrame
