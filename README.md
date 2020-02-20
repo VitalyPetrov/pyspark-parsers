@@ -5,9 +5,15 @@ different datafile types
 
 ## Installing dependencies
 
-- At first, you need to install Spark infrastructure
+- At first, you need to install Spark infrastructure 
+(suppose you already have ```conda``` package manager)
 ```shell script
-spark-installation-lines
+conda install -c conda-forge pyspark 
+sudo add-apt-repository ppa:openjdk-r/ppa
+sudo apt install openjdk-8-jdk openjdk-8-jre
+curl -O https://www-us.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
+tar xvf spark-2.4.4-bin-hadoop2.7.tgz
+sudo mv spark-2.4.4-bin-hadoop2.7/ /opt/spark 
 ```
 
 ## Sample data
