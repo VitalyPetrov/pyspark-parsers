@@ -15,8 +15,8 @@ from pyspark.sql.types import (
 
 def fetch_data(
     filename: str,
-    encoding: str,
-    row_tag: str,
+    separator: str,
+    escapechar: str,
     schema=None
 ):
     """
@@ -24,22 +24,23 @@ def fetch_data(
     To use, please specify data files destinaton (filename) and delimiter chars (separator and escapechar)
 
     :param filename: path to data files to parse (can be both separate file or collection by * pattern)
-    :param encoding: datafile encoding (UTF-8, ASCII, etc)
-    :param row_tag:  string to split the records
+    :param separator: char to split the columns
+    :param escapechar: char to split the rows
     :param schema: (optional) dataframe schema to use
 
     :return PySpark DataFrame object storing the data from given files
     """
-    if not (isinstance(row_tag, str) and isinstance(encoding, str)):
-        raise ValueError('Both rowTag and encoding should be str')
+    if not (isinstance(separator, str) and isinstance(escapechar, str)):
+        raise ValueError('Both separator and escapechar should be str')
 
     pyspark_df = (
         sqlContext
         .read
-        .format('xml')
+        .format('com.databricks.spark.csv')
+        .option('header', 'true')
         .option('inferschema', 'false')
-        .option('encoding', encoding)
-        .options(rowTag=row_tag)
+        .option('delimiter', separator)
+        .option('escape', escapechar)
     )
     if schema is not None:
         return pyspark_df.schema(schema).load(filename)
@@ -70,19 +71,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='A simple PySpark routine to parse given csv data files and deploy them to Hive'
     )
-    parser.add_argument('--file', type=str, dest='file', required=True,
-                        help='data file destination (given by pattern name is also valid)')
-    parser.add_argument('--encoding', type=str, dest='encoding', required=True,
-                        help='charset of given xml file')
-    parser.add_argument('--rowTag', type=str, dest='rowTag', required=True,
-                        help='separator to treat a row')
-    parser.add_argument('--to_table', type=str, dest='to_table', required=True,
+    parser.add_argument('--files', type=str, dest='files', required=True,
+                        help='data files destination (given by pattern name is also valid)')
+    parser.add_argument('--sep', type=str, dest='sep',
+                        required=True, help='char to split the columns')
+    parser.add_argument('--esc', type=str, dest='escape',
+                        required=True, help='char to split the rows')
+    parser.add_argument('--to_table', type=str, dest='to_table', required=False,
                         help='name of Hive db table to store the results of processing')
-
     args = parser.parse_args()
-    file, charset, row_tag_, table_name = args.file, args.encoding, args.rowTag, args.to_table
+    files, sep, escape, table_name = args.files, args.sep, args.escape, args.to_table
     # Fetch the data
-    data = fetch_data(file, charset, row_tag_).drop('_corrupt_record')
+    data = fetch_data(files, separator=sep, escapechar=escape)
 
     # Deploy the dataframe data on Hive db
     # it works only if HiveContext is initialized on your machine
