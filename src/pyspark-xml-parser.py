@@ -83,6 +83,7 @@ if __name__ == "__main__":
     file, charset, row_tag_, table_name = args.file, args.encoding, args.rowTag, args.to_table
     # Fetch the data
     data = fetch_data(file, charset, row_tag_).drop('_corrupt_record')
+
     # Deploy the dataframe data on Hive db
     # it works only if HiveContext is initialized on your machine
     if isinstance(sqlContext, HiveContext):
