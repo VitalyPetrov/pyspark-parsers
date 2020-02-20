@@ -2,15 +2,21 @@ import argparse
 
 from typing import List
 from pyspark import SparkContext
-from pyspark.sql import SQLContext, HiveContext
-from pyspark.sql.types import StructField, StringType, StructType
-from pyspark.sql.functions import col
+from pyspark.sql import (
+    SQLContext,
+    HiveContext
+)
+from pyspark.sql.types import (
+    StructField,
+    StringType,
+    StructType
+)
 
 
 def fetch_data(
     filename: str,
     encoding: str,
-    rowTag: str,
+    row_tag: str,
     schema=None
 ):
     """
@@ -19,21 +25,21 @@ def fetch_data(
 
     :param filename: path to data files to parse (can be both separate file or collection by * pattern)
     :param encoding: datafile encoding (UTF-8, ASCII, etc)
-    :param rowTag:  string to split the records
+    :param row_tag:  string to split the records
     :param schema: (optional) dataframe schema to use
 
     :return PySpark DataFrame object storing the data from given files
     """
-    if not (isinstance(rowTag, str) and isinstance(encoding, str)):
+    if not (isinstance(row_tag, str) and isinstance(encoding, str)):
         raise ValueError('Both rowTag and encoding should be str')
 
     pyspark_df = (
         sqlContext
-            .read
-            .format('xml')
-            .option('inferschema', 'false')
-            .option('encoding', encoding)
-            .options(rowTag=rowTag)
+        .read
+        .format('xml')
+        .option('inferschema', 'false')
+        .option('encoding', encoding)
+        .options(rowTag=row_tag)
     )
     if schema is not None:
         return pyspark_df.schema(schema).load(filename)
@@ -59,7 +65,7 @@ def obtain_schema(
 
 if __name__ == "__main__":
     sc = SparkContext()
-    sqlContext = HiveContext(sc)
+    sqlContext = SQLContext(sc)
 
     parser = argparse.ArgumentParser(
         description='A simple PySpark routine to parse given csv data files and deploy them to Hive'
@@ -74,10 +80,12 @@ if __name__ == "__main__":
                         help='name of Hive db table to store the results of processing')
 
     args = parser.parse_args()
-    file, encoding, row_tag, table_name = args.file, args.encoding, args.rowTag, args.to_table
+    file, charset, row_tag_, table_name = args.file, args.encoding, args.rowTag, args.to_table
     # Fetch the data
-    data = fetch_data(file, encoding, row_tag).drop('_corrupt_record')
+    data = fetch_data(file, charset, row_tag_).drop('_corrupt_record')
     # Deploy the dataframe data on Hive db
-    data.write.mode('overwrite').saveAsTable(table_name)
-    # sqlContext.sql("show tables").show()
+    # it works only if HiveContext is initialized on your machine
+    if isinstance(sqlContext, HiveContext):
+        data.write.mode('overwrite').saveAsTable(table_name)
+
     data.printSchema()
